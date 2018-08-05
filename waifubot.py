@@ -20,7 +20,7 @@ def needs_permission(bot):
         @bot.command(pass_context=True)
         @wraps(func)
         async def wrapped(ctx, *args, **kwargs):
-            if ctx.message.author.id == SUPER_MODERATOR or any(role.name == 'Moderator' for role in ctx.message.server.roles):
+            if ctx.message.author.id == SUPER_MODERATOR or any(role.name == 'Moderator' for role in ctx.message.author.roles):
                 return await func(ctx, *args, **kwargs)
             await bot.say("You don't have the permissions to run this command!")
         return wrapped
@@ -147,8 +147,7 @@ async def flag_meme(*args):
     if message:
         await bot.say(message)   
 
-
-@bot.command(pass_context=True)
+@needs_permission(bot)
 async def echo(ctx, *args):
     for arg in args:
         await bot.say(arg)
@@ -157,14 +156,14 @@ async def echo(ctx, *args):
 async def reload(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('y')
-    await bot.say('Reloading bot ~~~')
+    await bot.say('`~~~ Reloading bot ~~~`')
     await bot.close()
         
 @needs_permission(bot)
 async def shutdown(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('n')
-    await bot.say('Reloading bot ~~~')
+    await bot.say('`~~~ SHUTTING DOWN ~~~`')
     await bot.close()
 
 class NoResponseError(Exception):

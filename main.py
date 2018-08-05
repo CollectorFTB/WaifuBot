@@ -12,7 +12,8 @@ def get_token(fp):
 
 def run_client(bot, *args, **kwargs):
     loop = asyncio.get_event_loop()
-    while True:
+    line = 'y'
+    while line == 'y':
         try: 
             loop.run_until_complete(waifubot.bot.start(*args, **kwargs))
             reload(waifubot)
@@ -20,6 +21,8 @@ def run_client(bot, *args, **kwargs):
             print(e)
             print('bot restart')
             time.sleep(1)
+        with open('rerun.txt') as file:
+            line = file.read()
 
 def main():
     run_client(waifubot.bot, get_token('token.txt'))
