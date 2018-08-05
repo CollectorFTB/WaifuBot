@@ -14,19 +14,17 @@ from misc import get_messages
 
 bot = Bot(command_prefix='~')
 
-def create_bot():
-    # reload testing
-    bot = Bot(command_prefix='~')  
-    return bot
-
-def needs_permission(func):
-    @wraps(func)
-    def wrapper(ctx, *args, **kwargs):
-        if ctx.message.author.id == '168080614405177344' or get(ctx.server.roles, name='Moderator') in ctx.author.roles:
-            func(*args,**kwargs)
-    return wrapper
+def needs_permission(bot):
+    def decorator(func):
+        @bot.command(pass_context=True)
+        @wraps(func)
+        async def wrapped(ctx, *args, **kwargs):
+            if ctx.message.author.id == '168080614405177344' or any(role.name == 'Moderator' for role in ctx.message.server.roles):
+                return await func(ctx,*args,**kwargs)
+            await bot.say("You don't have the permissions to run this command!")
+        return wrapped
+    return decorator
        
-
 @bot.event
 async def on_ready():
     print(bot.user.name, 'ready for action!')
@@ -154,15 +152,13 @@ async def echo(ctx, *args):
     for arg in args:
         await bot.say(arg)
 
-@needs_permission
-@bot.command(pass_context=True)
-async def close(ctx, *args):
+@needs_permission(bot)
+async def reload(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('y')
     await bot.close()
         
-@needs_permission
-@bot.command(pass_context=True)
+@needs_permission(bot)
 async def shutdown(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('n')
