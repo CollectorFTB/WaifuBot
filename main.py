@@ -22,7 +22,7 @@ def run_client(bot, *args, **kwargs):
             time.sleep(1)
 
 def main():
-    run_client(WaifuBot.bot, get_token('token.txt'))
+    run_client(waifubot.bot, get_token('token.txt'))
 
 if __name__ == '__main__':
     main()
