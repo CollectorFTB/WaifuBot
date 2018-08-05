@@ -1,6 +1,7 @@
 import asyncio
 import string
 import time
+from collections import namedtuple
 
 import discord
 from discord.ext import commands
@@ -16,7 +17,8 @@ def create_bot():
     # reload testing
     bot = Bot(command_prefix='~')  
     return bot
-    
+
+def init_config():
 
 
 @bot.event
@@ -24,13 +26,19 @@ async def on_ready():
     print(bot.user.name, 'ready for action!')
     print('------')
 
+# add new item to collection - .. <collection> <item>
+# get item from collection  - ... <collection>
+# remove item from collection - .... <collection> <item>
 async def handle_collections(message):
-    split_message = message.content.split(" ")
-    if split_message[0] == '....':
+    split_message = message.content.split()
+    prefix = split_message[0]
+    ADD, GET, DELETE = '..',  '...', '....'
+
+    if prefix == DELETE:
         reply = delete_from_collection(split_message[1], " ".join(split_message[2:]))
-    elif split_message[0] == '..':
+    if prefix == ADD:
         reply = add_to_collection(split_message[1], " ".join(split_message[2:]))
-    elif len(split_message) == 2 and split_message[0] == '...':
+    if prefix == GET and len(split_message) == 2:
         reply = get_from_collection(split_message[1])
     
     await bot.send_message(destination=message.channel, content=reply)
@@ -47,7 +55,7 @@ async def on_message(message):
 @bot.command(pass_context=True, alias='muni')
 async def mooni(ctx, *args):
     if len(args) == 1:
-        await bot.send_file(fp='files/'+args[0]+'.mp3', destination=ctx.message.channel)
+        await bot.send_file(fp=f'files/{args[0]}.mp3', destination=ctx.message.channel)
 
 @bot.command(pass_context=True)
 async def prune(ctx, *args):
@@ -58,7 +66,7 @@ async def prune(ctx, *args):
         await bot.send_message(content='Pruned **' + str(amount_to_prune) + '** message(s)!', destination=ctx.message.channel)
   
 
-@bot.command()
+@bot.command
 async def polako(*args):
     await bot.say('https://i.imgur.com/3CQ040d.png')
 
@@ -107,7 +115,7 @@ async def meme(ctx, *args):
     if len(args) > 0:
         raw_message = "".join(args)
         message = ''
-        num2words = {0: "zero", 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine'}
+        num2words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
         for char in raw_message:
             if char in string.digits:
                 message += f":{num2words[int(char)]}:"
@@ -115,24 +123,23 @@ async def meme(ctx, *args):
                 message += f":regional_indicator_{char}:" if char != 'b' else ':b:'
         await bot.send_message(content=message, destination=ctx.message.channel)
 
-@bot.command(pass_context=True)
-async def flag_meme(ctx, *args):
+@bot.command
+async def flag_meme(*args):
     with open('files/flags.txt') as file:
         flags = file.read()
-    flags = flags.split(" ")
+    flags = flags.split()
 
-    if len(args) > 0:
-        def split_word_by_step(word, step):
-                split_word = [word[i:i+step] for i in range(0, len(word), step)]
-                return split_word
-        message= ''
-        for word in args:
-            split_word = split_word_by_step(word, 2)
-            print(split_word)
-            for i, pair in enumerate(split_word):
-                if pair.upper() in flags:
-                    split_word[i] = f':flag_{pair.lower()}:'
-            message += "".join(split_word) + " "
+    def split_word_by_step(word, step):
+        return [word[i:i+step] for i in range(0, len(word), step)]
+            
+    message= ''
+    for word in args:
+        split_word = split_word_by_step(word, 2)
+        for i, pair in enumerate(split_word):
+            if pair.upper() in flags:
+                split_word[i] = f':flag_{pair.lower()}:'
+        message += "".join(split_word) + " "
+    if message:
         await bot.say(message)   
 
 

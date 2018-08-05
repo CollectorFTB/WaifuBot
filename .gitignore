@@ -1,2 +1,4 @@
 token.txt
-./dir
+__pycache__/
+.vs/
+.vscode/

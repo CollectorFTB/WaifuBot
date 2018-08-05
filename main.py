@@ -15,10 +15,8 @@ def run_client(bot, *args, **kwargs):
     while True:
         try: 
             loop.run_until_complete(WaifuBot.bot.start(*args, **kwargs))
-            print('here')
-            WaifuBot.bot.close()
+            WaifuBot.bot.logout()
             WaifuBot.create_bot()
-            print('here')
             reload(WaifuBot)
         except Exception as e:
             print(e)
