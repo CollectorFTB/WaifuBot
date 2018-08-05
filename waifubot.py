@@ -14,13 +14,14 @@ from misc import get_messages
 
 bot = Bot(command_prefix='~')
 
+SUPER_MODERATOR = '168080614405177344'
 def needs_permission(bot):
     def decorator(func):
         @bot.command(pass_context=True)
         @wraps(func)
         async def wrapped(ctx, *args, **kwargs):
-            if ctx.message.author.id == '168080614405177344' or any(role.name == 'Moderator' for role in ctx.message.server.roles):
-                return await func(ctx,*args,**kwargs)
+            if ctx.message.author.id == SUPER_MODERATOR or any(role.name == 'Moderator' for role in ctx.message.server.roles):
+                return await func(ctx, *args, **kwargs)
             await bot.say("You don't have the permissions to run this command!")
         return wrapped
     return decorator
@@ -29,6 +30,7 @@ def needs_permission(bot):
 async def on_ready():
     print(bot.user.name, 'ready for action!')
     print('------')
+
 
 # add new item to collection - .. <collection> <item>
 # get item from collection  - ... <collection> - ... <collection>
@@ -116,16 +118,15 @@ async def fizzbuzz(ctx, *args):
 
 @bot.command(pass_context=True)
 async def meme(ctx, *args):
-    if len(args) > 0:
-        raw_message = "".join(args)
-        message = ''
-        num2words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-        for char in raw_message:
-            if char in string.digits:
-                message += f":{num2words[int(char)]}:"
-            else:
-                message += f":regional_indicator_{char}:" if char != 'b' else ':b:'
-        await bot.send_message(content=message, destination=ctx.message.channel)
+    raw_message = "".join(args)
+    message = ''
+    num2words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+    for char in raw_message:
+        if char in string.digits:
+            message += f":{num2words[int(char)]}:"
+        else:
+            message += f":regional_indicator_{char}:" if char != 'b' else ':b:'
+    await bot.send_message(content=message, destination=ctx.message.channel)
 
 @bot.command
 async def flag_meme(*args):
@@ -156,12 +157,14 @@ async def echo(ctx, *args):
 async def reload(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('y')
+    await bot.say('Reloading bot ~~~')
     await bot.close()
         
 @needs_permission(bot)
 async def shutdown(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('n')
+    await bot.say('Reloading bot ~~~')
     await bot.close()
 
 class NoResponseError(Exception):

@@ -2,7 +2,7 @@ import asyncio
 import time
 from importlib import reload
 
-import WaifuBot
+import waifubot
 
 
 def get_token(fp):
@@ -14,7 +14,7 @@ def run_client(bot, *args, **kwargs):
     loop = asyncio.get_event_loop()
     while True:
         try: 
-            loop.run_until_complete(WaifuBot.bot.start(*args, **kwargs))
+            loop.run_until_complete(waifubot.bot.start(*args, **kwargs))
             reload(WaifuBot)
         except Exception as e:
             print(e)
@@ -23,14 +23,6 @@ def run_client(bot, *args, **kwargs):
 
 def main():
     run_client(WaifuBot.bot, get_token('token.txt'))
-    # WaifuBot.bot.run(get_token('token.txt'))
-    """
-    WaifuBot.bot.run(get_token('token.txt'))
-    
-        if line == 'y':
-            reload(WaifuBot)
-            WaifuBot.create_bot()
-            WaifuBot.bot.run(get_token('token.txt'))
-    """
+
 if __name__ == '__main__':
     main()
