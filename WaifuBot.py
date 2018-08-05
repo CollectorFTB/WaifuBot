@@ -2,6 +2,7 @@ import asyncio
 import string
 import time
 from collections import namedtuple
+from functools import wraps
 
 import discord
 from discord.ext import commands
@@ -18,8 +19,13 @@ def create_bot():
     bot = Bot(command_prefix='~')  
     return bot
 
-def init_config():
-
+def needs_permission(func):
+    @wraps(func)
+    def wrapper(ctx, *args, **kwargs):
+        if ctx.message.author.id == '168080614405177344' or get(ctx.server.roles, name='Moderator') in ctx.author.roles:
+            func(*args,**kwargs)
+    return wrapper
+       
 
 @bot.event
 async def on_ready():
@@ -27,7 +33,7 @@ async def on_ready():
     print('------')
 
 # add new item to collection - .. <collection> <item>
-# get item from collection  - ... <collection>
+# get item from collection  - ... <collection> - ... <collection>
 # remove item from collection - .... <collection> <item>
 async def handle_collections(message):
     split_message = message.content.split()
@@ -143,26 +149,24 @@ async def flag_meme(*args):
         await bot.say(message)   
 
 
-
-@bot.command()
-async def echo(*args):
+@bot.command(pass_context=True)
+async def echo(ctx, *args):
     for arg in args:
         await bot.say(arg)
 
-
+@needs_permission
 @bot.command(pass_context=True)
 async def close(ctx, *args):
-    if ctx.message.author.id == '168080614405177344':
-        with open('rerun.txt', 'w') as file:
-            file.write('y')
-        await bot.close()
-
+    with open('rerun.txt', 'w') as file:
+        file.write('y')
+    await bot.close()
+        
+@needs_permission
 @bot.command(pass_context=True)
 async def shutdown(ctx, *args):
-    if ctx.message.author.id == '168080614405177344':
-        with open('rerun.txt', 'w') as file:
-            file.write('n')
-        await bot.close()
+    with open('rerun.txt', 'w') as file:
+        file.write('n')
+    await bot.close()
 
 class NoResponseError(Exception):
     def __init__(self):
