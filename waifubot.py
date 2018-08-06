@@ -1,7 +1,6 @@
 import asyncio
 import string
 import time
-from collections import namedtuple
 from functools import wraps
 
 import discord
@@ -10,9 +9,10 @@ from discord.ext.commands import Bot
 
 from meme_collections import (add_to_collection, delete_from_collection,
                               get_from_collection)
-from misc import get_messages
+from misc import get_messages, load_config
 
 bot = Bot(command_prefix='~')
+CONFIG = load_config()
 
 SUPER_MODERATOR = '168080614405177344'
 def needs_permission(bot):
@@ -67,7 +67,7 @@ async def mooni(ctx, *args):
 async def prune(ctx, *args):
     if len(args) == 1:
         amount_to_prune = int(args[0])
-        messages = await get_messages(bot, amount_to_prune)
+        messages = await get_messages(bot, ctx, amount_to_prune)
         await bot.delete_messages(messages)
         await bot.send_message(content='Pruned **' + str(amount_to_prune) + '** message(s)!', destination=ctx.message.channel)
   
@@ -79,11 +79,8 @@ async def polako(*args):
 @bot.command(pass_context=True)
 async def fizzbuzz(ctx, *args):
     # returns fizzbuzz reply for number
-    with open('data/config.json', 'r') as file:
-        config = json.load(file)
-    threshold = config['threshold']
-    user = ctx.user
-    from misc import fizzbuz as fb
+    threshold = CONFIG['threshold']
+    from misc import fizzbuzz as fb
 
 
     values = [3, 5, 7, 13]
@@ -97,22 +94,19 @@ async def fizzbuzz(ctx, *args):
     await bot.say('Choose difficulty: ' + difficulties_string)
     try:
         timer = time.time()
-        while time.time() - timer < threshhold:
-            messages = await get_messages(bot, 6)
-            for message in messages:
-                if message.content.lower() in possible_responses:
-                    user_response = message.content.lower()
-                    break
-            if user_response != '':
+        while time.time() - timer < threshold:
+            user_responses = [message for message in reversed(await get_messages(bot, ctx, 5)) if message.content.lower() in possible_responses]
+            user_response = user_responses[0].content if user_responses else ''
+            if user_response:
                 break
         else:
-            if user_response == '':
-                raise NoResponseError()
+            raise NoResponseError()
         
+        # do_something()
         await bot.say('poggers ' + user_response)
 
     except NoResponseError as e:
-        await bot.send_message(destination=ctx.channel, content=e)
+        await bot.send_message(destination=ctx.message.channel, content='Error: ' + e.value)
         
 
 
