@@ -9,10 +9,11 @@ from discord.ext.commands import Bot
 
 from meme_collections import (add_to_collection, delete_from_collection,
                               get_from_collection)
-from misc import get_messages, load_config
+from misc import get_messages, load_config, split_word_by_step
 
 bot = Bot(command_prefix='~')
 CONFIG = load_config()
+last_message = ''
 
 SUPER_MODERATOR = '168080614405177344'
 def needs_permission(bot):
@@ -86,29 +87,74 @@ async def fizzbuzz(ctx, *args):
     values = [3, 5, 7, 13]
     responses = ['fizz', 'buzz', 'bizz', 'fuzz']
     names = ['Easy', 'Normal', 'Hard', 'Expert']
-    difficulties = {name:{r:v for r,v in zip(responses[:i+1], values[:i+1])} for i, name in enumerate(names)}
+    difficulties = {name.lower():{value:response for response, value in zip(responses[:i+1], values[:i+1])} for i, name in enumerate(names)}
     difficulties_string = ', '.join(names)
+    name_responses = [name.lower() for name in names]
 
-    user_response = str()
-    possible_responses = [name.lower() for name in names]
-    await bot.say('Choose difficulty: ' + difficulties_string)
+    def valid_difficulty_response(message):
+        name_responses = [name.lower() for name in names]
+        return message.content.lower() in name_responses
+    def valid_number_response(message):
+        return int(message.content) if message.content.isdigit() else False
+    def valid_fizzbuzz_response(message):
+        if message.content.isdigit():
+            return True
+        responses = ['fizz', 'buzz', 'bizz', 'fuzz']
+        fizzbuzz_split = split_word_by_step(message.content, 4)
+        i = -1
+        for word in fizzbuzz_split:
+            if word in responses:
+                j = responses.index(word)
+                if j > i:
+                    i = j
+                else:
+                    return False
+            else:
+                return False
+        return message
+
     try:
-        timer = time.time()
-        while time.time() - timer < threshold:
-            user_responses = [message for message in reversed(await get_messages(bot, ctx, 5)) if message.content.lower() in possible_responses]
-            user_response = user_responses[0].content if user_responses else ''
-            if user_response:
-                break
-        else:
-            raise NoResponseError()
-        
-        # do_something()
-        await bot.say('poggers ' + user_response)
+        await bot.say('Choose difficulty: ' + difficulties_string)
+        response = await wait_for_response(ctx, valid_difficulty_response, threshold)
+        await bot.say('Lets Go!')
+    except BadResponseError as e:
+        await bot.send_message(destination=ctx.message.channel, content=e.value)
+        return
 
-    except NoResponseError as e:
-        await bot.send_message(destination=ctx.message.channel, content='Error: ' + e.value)
-        
+    try:
+        difficulty = difficulties[response]
+        current = 1
+        while True:
+            current_fizzbuzz = fb(current, difficulty)
+            current += 1
+            await bot.say(current_fizzbuzz)
+            
+            response = await wait_for_response(ctx, valid_fizzbuzz_response, threshold)
+            current_fizzbuzz = fb(current, difficulty)
+            response = int(response) if response.isdigit() else response
+            if response == current_fizzbuzz:
+                current += 1
+            else:
+                print("user:", response, "answer:", current_fizzbuzz)
+                raise BadResponseError("Wrong answer, I Win!")
 
+    except BadResponseError as e:
+        await bot.send_message(destination=ctx.message.channel, content="TIME'S OUT! I win !!   ")
+
+async def wait_for_response(ctx, response_func, time_threshold):
+    timer = time.time()
+    user_response = ''
+    global last_message
+    while time.time() - timer < time_threshold:
+        user_responses = [message for message in reversed(await get_messages(bot, ctx, 2)) if message.author == ctx.message.author and response_func(message) and message.content != last_message]
+        if user_responses:
+            user_response = user_responses[0].content
+            last_message = user_response            
+            break
+    else:
+        raise BadResponseError('Error: No response in given time')
+    return user_response
+    
 
 @bot.command(pass_context=True)
 async def meme(ctx, *args):
@@ -128,9 +174,7 @@ async def flag_meme(*args):
         flags = file.read()
     flags = flags.split()
 
-    def split_word_by_step(word, step):
-        return [word[i:i+step] for i in range(0, len(word), step)]
-            
+
     message= ''
     for word in args:
         split_word = split_word_by_step(word, 2)
@@ -160,8 +204,8 @@ async def shutdown(ctx, *args):
     await bot.say('`~~~ SHUTTING DOWN ~~~`')
     await bot.close()
 
-class NoResponseError(Exception):
-    def __init__(self):
-        self.value = 'No response in given time limit'
+class BadResponseError(Exception):
+    def __init__(self, value):
+        self.value = value
     def __str__(self):
         return repr(self.value)
