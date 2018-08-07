@@ -16,9 +16,9 @@ CONFIG = load_config()
 last_message = ''
 
 SUPER_MODERATOR = '168080614405177344'
-def needs_permission(bot):
-    def decorator(func):
-        @bot.command(pass_context=True)
+def needs_permission(bot, hidden):
+    def decorator(func, hidden=hidden):
+        @bot.command(pass_context=True ,hidden=hidden)
         @wraps(func)
         async def wrapped(ctx, *args, **kwargs):
             if ctx.message.author.id == SUPER_MODERATOR or any(role.name == 'Moderator' for role in ctx.message.author.roles):
@@ -185,19 +185,19 @@ async def flag_meme(*args):
     if message:
         await bot.say(message)   
 
-@needs_permission(bot)
+@needs_permission(bot, hidden=True)
 async def echo(ctx, *args):
     for arg in args:
         await bot.say(arg)
 
-@needs_permission(bot)
+@needs_permission(bot, hidden=True)
 async def reload(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('y')
     await bot.say('`~~~ Reloading bot ~~~`')
     await bot.close()
         
-@needs_permission(bot)
+@needs_permission(bot, hidden=True)
 async def shutdown(ctx, *args):
     with open('rerun.txt', 'w') as file:
         file.write('n')
