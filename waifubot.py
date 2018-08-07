@@ -168,7 +168,7 @@ async def meme(ctx, *args):
             message += f":regional_indicator_{char}:" if char != 'b' else ':b:'
     await bot.send_message(content=message, destination=ctx.message.channel)
 
-@bot.command
+@bot.command()
 async def flag_meme(*args):
     with open('files/flags.txt') as file:
         flags = file.read()
@@ -203,6 +203,13 @@ async def shutdown(ctx, *args):
         file.write('n')
     await bot.say('`~~~ SHUTTING DOWN ~~~`')
     await bot.close()
+
+@bot.command(pass_context=True, hidden=True)
+async def secret(ctx, *args):
+    if ctx.message.author.id in ['371406642023235584', SUPER_MODERATOR]:
+        with open('secret.txt', 'r') as file:
+            secret_message = file.read()
+        await bot.send_message(destination=ctx.message.author, content=secret_message)
 
 class BadResponseError(Exception):
     def __init__(self, value):
