@@ -101,11 +101,7 @@ async def fizzbuzz(ctx, *args):
         await bot.say('Choose difficulty: ' + difficulties_string)
         response = await wait_for_response(ctx, valid_difficulty_response, threshold)
         await bot.say('Lets Go!')
-    except BadResponseError as e:
-        await bot.say(e.value)
-        return
-
-    try:
+        
         difficulty = difficulties[response]
         current = 1
         while True:
@@ -121,9 +117,8 @@ async def fizzbuzz(ctx, *args):
             else:
                 print("user:", response, "answer:", current_fizzbuzz)
                 raise BadResponseError("Wrong answer, I Win!")
-
     except BadResponseError as e:
-        await bot.say(content="TIME'S OUT! I win !!   ")
+        await bot.say(e.value)
 
 async def wait_for_response(ctx, response_func, time_threshold):
     timer = time.time()
