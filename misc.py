@@ -19,3 +19,6 @@ async def get_messages(bot, ctx, count):
 
 def split_word_by_step(word, step):
     return [word[i:i+step] for i in range(0, len(word), step)]
+
+def turn_into_emoji(message):
+    pass

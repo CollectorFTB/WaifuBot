@@ -8,8 +8,8 @@ from discord.ext import commands
 from discord.ext.commands import Bot
 
 from meme_collections import (add_to_collection, delete_from_collection,
-                              get_from_collection)
-from misc import get_messages, load_file, split_word_by_step
+                              get_from_collection, handle_collections)
+from misc import get_messages, load_file, split_word_by_step, turn_into_emoji
 
 bot = Bot(command_prefix='~')
 CONFIG = load_file('data/config.json')
@@ -34,30 +34,12 @@ async def on_ready():
     print(bot.user.name, 'ready for action!')
     print('------')
 
-
-# add new item to collection - .. <collection> <item>
-# get item from collection  - ... <collection> - ... <collection>
-# remove item from collection - .... <collection> <item>
-async def handle_collections(message):
-    split_message = message.content.split()
-    prefix = split_message[0]
-    ADD, GET, DELETE = '..',  '...', '....'
-
-    if prefix == DELETE:
-        reply = delete_from_collection(split_message[1], " ".join(split_message[2:]))
-    if prefix == ADD:
-        reply = add_to_collection(split_message[1], " ".join(split_message[2:]))
-    if prefix == GET and len(split_message) == 2:
-        reply = get_from_collection(split_message[1])
-    
-    await bot.send_message(destination=message.channel, content=reply)
-
 @bot.event
 async def on_message(message):
-    if message.content.lower() == "right?" and message.author.id == '168080614405177344':
-        await bot.send_message(message.channel, "yeah :thumbsup:")
-    elif message.content[:2] == '..':
-        await handle_collections(message)
+    if message.content[:2] == '..':
+        await bot.send_message(content=handle_collections(message), destination=message.channel)
+    elif message.content[::-len(message.content)-1] == '::':
+        await turn_into_emoji(message)
     else:
         await bot.process_commands(message)
 
@@ -72,10 +54,10 @@ async def prune(ctx, *args):
         amount_to_prune = int(args[0])
         messages = await get_messages(bot, ctx, amount_to_prune)
         await bot.delete_messages(messages)
-        await bot.send_message(content='Pruned **' + str(amount_to_prune) + '** message(s)!', destination=ctx.message.channel)
+        await bot.say('Pruned **' + str(amount_to_prune) + '** message(s)!')
   
 
-@bot.command
+@bot.command()
 async def polako(*args):
     await bot.say('https://i.imgur.com/3CQ040d.png')
 
@@ -120,7 +102,7 @@ async def fizzbuzz(ctx, *args):
         response = await wait_for_response(ctx, valid_difficulty_response, threshold)
         await bot.say('Lets Go!')
     except BadResponseError as e:
-        await bot.send_message(destination=ctx.message.channel, content=e.value)
+        await bot.say(e.value)
         return
 
     try:
@@ -141,7 +123,7 @@ async def fizzbuzz(ctx, *args):
                 raise BadResponseError("Wrong answer, I Win!")
 
     except BadResponseError as e:
-        await bot.send_message(destination=ctx.message.channel, content="TIME'S OUT! I win !!   ")
+        await bot.say(content="TIME'S OUT! I win !!   ")
 
 async def wait_for_response(ctx, response_func, time_threshold):
     timer = time.time()
@@ -168,14 +150,13 @@ async def meme(ctx, *args):
             message += f":{num2words[int(char)]}:"
         else:
             message += f":regional_indicator_{char}:" if char != 'b' else ':b:'
-    await bot.send_message(content=message, destination=ctx.message.channel)
+    await bot.say(message)
 
 @bot.command()
 async def flag_meme(*args):
     with open('files/flags.txt') as file:
         flags = file.read()
     flags = flags.split()
-
 
     message= ''
     for word in args:
