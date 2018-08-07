@@ -5,3 +5,5 @@ __pycache__/
 venv
 rerun.txt
 secret.txt
+data/ids.txt
+data/ids.json

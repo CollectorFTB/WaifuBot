@@ -9,14 +9,16 @@ from discord.ext.commands import Bot
 
 from meme_collections import (add_to_collection, delete_from_collection,
                               get_from_collection)
-from misc import get_messages, load_config, split_word_by_step
+from misc import get_messages, load_file, split_word_by_step
 
 bot = Bot(command_prefix='~')
-CONFIG = load_config()
+CONFIG = load_file('data/config.json')
+SPECIAL_IDS = load_file('data/ids.json')
 last_message = ''
 
-SUPER_MODERATOR = '168080614405177344'
-def needs_permission(bot, hidden):
+SUPER_MODERATOR = SPECIAL_IDS[0]
+
+def needs_permission(bot, hidden=False):
     def decorator(func, hidden=hidden):
         @bot.command(pass_context=True ,hidden=hidden)
         @wraps(func)
@@ -206,11 +208,20 @@ async def shutdown(ctx, *args):
 
 @bot.command(pass_context=True, hidden=True)
 async def secret(ctx, *args):
-    if ctx.message.author.id in ['371406642023235584', SUPER_MODERATOR]:
+    if ctx.message.author.id in SPECIAL_IDS:
         with open('secret.txt', 'r') as file:
             secret_message = file.read()
         await bot.send_message(destination=ctx.message.author, content=secret_message)
 
+@needs_permission(bot, hidden=True)
+async def id(ctx, *args):
+    if len(args) == 0:
+        await bot.say('No such user(s).')
+    for username in args:
+        for user in ctx.message.server.members:
+            if user.name == username:
+                await bot.send_message(content=f'{user.name} : {user.id}', destination=ctx.message.author)
+            
 class BadResponseError(Exception):
     def __init__(self, value):
         self.value = value

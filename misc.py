@@ -2,11 +2,9 @@ import asyncio
 import json
 
 
-def load_config():
-    with open('data/config.json', 'r') as file:
-        data = json.load(file)
-    config = data
-    return config
+def load_file(fp):
+    with open(fp, 'r') as file:
+        return json.load(file)
 
 def fizzbuzz(number, divisors):
     output = ''
