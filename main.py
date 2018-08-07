@@ -5,11 +5,13 @@ from importlib import reload
 import waifubot
 
 
+# get the bot token 
 def get_token(fp):
     with open(fp, 'r') as file:
         token = file.read()
     return token
 
+# loop that handles reloading/shutting down the bot
 def run_client(bot, *args, **kwargs):
     loop = asyncio.get_event_loop()
     line = 'y'
