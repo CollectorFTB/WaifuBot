@@ -22,6 +22,15 @@ def handle_collections(message):
 
 fp = 'data/collections.json'
 def get_from_collection(name):
+    """Get item from the collection file
+    
+    Arguments:
+        name {str} -- name of collection to retrieve from
+    
+    Returns:
+        [str] -- retrieved item or error message
+    """
+
     with open(fp, 'r') as file:
         data = json.load(file)
     name = name.lower()
@@ -30,6 +39,16 @@ def get_from_collection(name):
     return 'Empty Collection'
 
 def add_to_collection(name, item):
+    """Add item to collection file
+    
+    Arguments:
+        name {str} -- name of collection to retrieve from
+        item {str} -- new item to add to the collectoin
+    
+    Returns:
+        str -- status message
+    """
+
     with open(fp, 'r') as file:
         data = json.load(file)
     name = name.lower()
@@ -40,9 +59,19 @@ def add_to_collection(name, item):
     with open(fp, 'w') as file:
         json.dump(data, file)
 
-    return 'Added successfully to ' + name + '.'
+    return f'Added successfully to {name}.'
 
 def delete_from_collection(name, item):
+    """[summary]
+    
+    Arguments:
+        name {[type]} -- [description]
+        item {[type]} -- [description]
+    
+    Returns:
+        [type] -- [description]
+    """
+
     reply = 'Item removed successfully.'
     with open(fp, 'r') as file:
         data = json.load(file)

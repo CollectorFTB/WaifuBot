@@ -5,14 +5,24 @@ from importlib import reload
 import waifubot
 
 
-# get the bot token 
 def get_token(fp):
-    with open(fp, 'r') as file:
-        token = file.read()
-    return token
+    """Gets the bot token from the token file
+    
+    Arguments:
+        fp {str} -- file path to the token
+    
+    Returns:
+        [str] -- bot token
+    """
 
-# loop that handles reloading/shutting down the bot
-def run_client(bot, *args, **kwargs):
+    with open(fp, 'r') as file:
+        return file.read()
+
+
+def run_client(*args, **kwargs):
+    """loop that handles reloading/shutting down the bot
+    """
+
     loop = asyncio.get_event_loop()
     line = 'y'
     while line == 'y':
@@ -23,11 +33,11 @@ def run_client(bot, *args, **kwargs):
             print(e)
             print('bot restart')
             time.sleep(1)
-        with open('rerun.txt') as file:
+        with open('data/rerun.txt') as file:
             line = file.read()
 
 def main():
-    run_client(waifubot.bot, get_token('token.txt'))
+    run_client(get_token('data/token.txt'))
 
 if __name__ == '__main__':
     main()

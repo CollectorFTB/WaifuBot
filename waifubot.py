@@ -20,8 +20,18 @@ SPECIAL_IDS = load_file('data/ids.json')
 SUPER_MODERATOR = SPECIAL_IDS[0]
 last_message = ''
 
-# decorator to make a command that forces the user to have sufficient permissions to use the command
+
 def needs_permission(bot, hidden=False):
+    """Decorator to make a command that forces the user to have sufficient permissions to use the command
+    
+    Arguments:
+        bot {Bot} -- the global scope bot to send error messages
+    
+    Keyword Arguments:
+        hidden {bool} -- if true, the command will not appear in the built in help command (default: {False})
+    
+    """
+
     def decorator(func, hidden=hidden):
         @bot.command(pass_context=True ,hidden=hidden)
         @wraps(func)
@@ -32,15 +42,22 @@ def needs_permission(bot, hidden=False):
         return wrapped
     return decorator
 
-# event that gets triggered whenever the bot is started
 @bot.event
 async def on_ready():
+    """event that gets triggered whenever the bot is started
+    """
+
     print(bot.user.name, 'ready for action!')
     print('------')
 
-# event that gets triggered whenever a message is sent
 @bot.event
 async def on_message(message):
+    """Event that happens whenever a message is sent
+    
+    Arguments:
+        message {Message} -- the sent message (acts like)
+    """
+
     if message.content[:2] == '..':
         await bot.send_message(content=handle_collections(message), destination=message.channel)
     elif message.content[::-len(message.content)-1] == '::':
@@ -48,36 +65,49 @@ async def on_message(message):
     else:
         await bot.process_commands(message)
 
-# returns mooni sound sample
+
 @bot.command(pass_context=True, alias='muni')
 async def mooni(ctx, *args):
+    """Command to send mp3 file containing mooni sample
+    
+    Arguments:
+        ctx {[type]} -- [description]
+    """
+
     if len(args) == 1:
         await bot.send_file(fp=f'files/{args[0]}.mp3', destination=ctx.message.channel)
 
-# prunes messages in the current channel
+
 """
 >>> ~prune 5
 """
 @bot.command(pass_context=True)
-async def prune(ctx, *args):
-    if len(args) == 1:
-        amount_to_prune = int(args[0])
-        messages = await get_messages(bot, ctx, amount_to_prune)
-        await bot.delete_messages(messages)
-        await bot.say('Pruned **' + str(amount_to_prune) + '** message(s)!')
+async def prune(ctx, amount_to_prune, *args):
+    """Command to delete messages from a channel
+    
+    Arguments:
+        ctx {[Context]} -- deletes messages from ctx.channel
+    """
+    messages = await get_messages(bot, ctx, amount_to_prune)
+    await bot.delete_messages(messages)
+    await bot.say('Pruned **' + str(amount_to_prune) + '** message(s)!')
   
-# polako meme
+
 """
 >>> ~polako
 https://i.imgur.com/3CQ040d.png
 """
 @bot.command()
 async def polako(*args):
+    """polako meme
+    """
+
     await bot.say('https://i.imgur.com/3CQ040d.png')
 
 @bot.command(pass_context=True)
 async def fizzbuzz(ctx, *args):
-    # returns fizzbuzz reply for number
+    """Command to play fizzbuzz with user
+    """
     threshold = CONFIG['threshold']
     from misc import fizzbuzz as fb
 
@@ -116,7 +146,7 @@ async def fizzbuzz(ctx, *args):
         response = await wait_for_response(ctx, valid_difficulty_response, threshold)
         await bot.say('Lets Go!')
 
-        difficulty = difficulties[response]
+        difficulty = difficulties[response.lower()]
         current = 1
         while True:
             current_fizzbuzz = fb(current, difficulty)
@@ -129,13 +159,19 @@ async def fizzbuzz(ctx, *args):
             if response == current_fizzbuzz:
                 current += 1
             else:
-                print("user:", response, "answer:", current_fizzbuzz)
                 raise BadResponseError("Wrong answer, I Win!")
     except BadResponseError as e:
         await bot.say(e.value)
 
-# will wait time_threshold in ctx.channel for a valid response from the user 
+
 async def wait_for_response(ctx, response_func, time_threshold):
+    """Command to allow interative talk with user
+    
+    Arguments:
+        response_func {function} -- Function to check each message to see if its valid
+        time_threshold {int} -- Time to wait before raising an exception
+    """
+
     timer = time.time()
     user_response = ''
     global last_message
@@ -149,7 +185,7 @@ async def wait_for_response(ctx, response_func, time_threshold):
         raise BadResponseError('Error: No response in given time')
     return user_response
 
-# turn the message into alphanumeric emojis 
+
 """
 >>> ~meme a1
 :regional_indicator_a::one:
@@ -158,6 +194,9 @@ async def wait_for_response(ctx, response_func, time_threshold):
 """
 @bot.command(pass_context=True)
 async def meme(ctx, *args):
+    """
+    Turn the message into alphanumeric emojis 
+    """
     raw_message = "".join(args)
     message = ''
     num2words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
@@ -168,7 +207,6 @@ async def meme(ctx, *args):
             message += f":regional_indicator_{char}:" if char != 'b' else ':b:'
     await bot.say(message)
 
-# turn the message into a flag meme 
 """
 >>> ~flag_meme canada 
 :flag_ca::flag_na:da
@@ -177,7 +215,9 @@ async def meme(ctx, *args):
 """
 @bot.command()
 async def flag_meme(*args):
-    with open('files/flags.txt') as file:
+    """Turn the message into a flag meme
+    """
+    with open('data/flags.txt') as file:
         flags = file.read()
     flags = flags.split()
 
@@ -191,41 +231,46 @@ async def flag_meme(*args):
     if message:
         await bot.say(message)   
 
-# repeat anything that the user said
 """
 >>> ~echo 123 test
 123 test
 """
 @needs_permission(bot, hidden=True)
 async def echo(ctx, *args):
+    """Repeat a message in chat
+    """
+
     for arg in args:
         await bot.say(arg)
 
-# write y into a text file to signal to main function that needs to reload the bot
 @needs_permission(bot, hidden=True)
 async def reload(ctx, *args):
+    """Signal to main function that it doesn't need to restart
+    """
     with open('rerun.txt', 'w') as file:
         file.write('y')
     await bot.say('`~~~ Reloading bot ~~~`')
     await bot.close()
         
-# write y into a text file to signal to main function that needs to reload the bot
 @needs_permission(bot, hidden=True)
 async def shutdown(ctx, *args):
-    with open('rerun.txt', 'w') as file:
+    """Signal to main function that it needs to reload the bot
+    """
+    with open('data/rerun.txt', 'w') as file:
         file.write('n')
     await bot.say('`~~~ SHUTTING DOWN ~~~`')
     await bot.close()
 
-# monkaS plz no
 @bot.command(pass_context=True, hidden=True)
 async def secret(ctx, *args):
+    """monkaS
+    """
     if ctx.message.author.id in SPECIAL_IDS:
-        with open('secret.txt', 'r') as file:
+        with open('data/secret.txt', 'r') as file:
             secret_message = file.read()
         await bot.send_message(destination=ctx.message.author, content=secret_message)
 
-# send the user a message with each id of the users he specified
+
 """
 >>> ~id Collector
 406768116808128
@@ -233,6 +278,8 @@ async def secret(ctx, *args):
 """
 @needs_permission(bot, hidden=True)
 async def id(ctx, *args):
+    """Send the user a message with each id of the users he specified
+    """
     if len(args) == 0:
         await bot.say('No such user(s).')
     for username in args:
@@ -240,9 +287,26 @@ async def id(ctx, *args):
             if user.name == username:
                 await bot.send_message(content=f'{user.name} : {user.id}', destination=ctx.message.author)
 
-# exception for the fizzbuzz game
+
 class BadResponseError(Exception):
+    """Exception class that gets raised whenever a user response doesn't fit the conditions
+
+    Attributes:
+        value (str): Holds the error message for the exception
+    """
     def __init__(self, value):
+        """Constructor for the BadResponseError class
+        
+        Arguments:
+            value {str} -- Error message
+        """
+
         self.value = value
     def __str__(self):
+        """
+        Function to return string representation of the exception
+
+        Returns:
+            str: A string to represent the exception value
+        """
         return repr(self.value)
