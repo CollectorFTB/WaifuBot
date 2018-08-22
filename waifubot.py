@@ -6,6 +6,7 @@ from functools import wraps
 from typing import Callable
 
 import discord
+from discord import PermissionOverwrite
 from discord.ext import commands
 from discord.ext.commands import Bot
 
@@ -22,7 +23,6 @@ SPECIAL_IDS = load_file('data/ids.json')
 SUPER_MODERATOR = SPECIAL_IDS[0]
 last_message = ''
 
-
 def needs_permission(bot: discord.ext.commands.Bot, hidden: bool=False):
     """
     Decorator to make a command that forces the user to have sufficient permissions to use the command    
@@ -37,12 +37,12 @@ def needs_permission(bot: discord.ext.commands.Bot, hidden: bool=False):
         return wrapped
     return decorator
 
-def private_command(bot: discord.ext.commands.Bot):
+def private_command(bot: discord.ext.commands.Bot, pass_context: bool=True):
     """
     Decorator to make a command that only the programmer can use :^)
     """
-    def decorator(func: Callable):
-        @bot.command(pass_context=True ,hidden=True)
+    def decorator(func: Callable, pass_context=pass_context):
+        @bot.command(pass_context=pass_context ,hidden=True)
         @wraps(func)
         async def wrapped(ctx, *args, **kwargs):
             if ctx.message.author.id == SUPER_MODERATOR:
@@ -55,7 +55,7 @@ async def on_ready():
     """
     event that gets triggered whenever the bot is started
     """
-    await bot.change_presence(game=discord.Game(name="with Collector"))
+    await bot.change_presence(game=discord.Game(name='with Collector'))
     print(bot.user.name, 'ready for action!')
     print('------')
 
@@ -74,11 +74,11 @@ async def on_message(message: discord.Message):
 
 
 @bot.command(pass_context=True, alias='muni')
-async def mooni(ctx, file_name, *args):
+async def mooni(ctx, *args):
     """
     Command to send mp3 file containing mooni sample
     """
-    await bot.send_file(fp=f'files/{args[0]}.mp3', destination=ctx.message.channel)
+    await bot.send_file(fp=f'files/{"_".join(args)}.mp3', destination=ctx.message.channel)
 
 
 """
@@ -192,7 +192,7 @@ async def meme(ctx, *args):
         if char in string.digits:
             message += f":{num2words[int(char)]}:"
         else:
-            message += f":regional_indicator_{char}:" if char != 'b' else ':b:'
+            message += f":regional_indicator_{char}: " if char != 'b' else ':b:'
     await bot.say(message)
 
 """
@@ -284,7 +284,32 @@ async def id(ctx, *args):
 
 @private_command(bot)
 async def change_presence(ctx, *args, **kwargs):
+    """
+    Command only SUPER_MODERATOR can use
+    """
+    await bot.delete_message(ctx.message)
     await bot.change_presence(game=discord.Game(name=' '.join(args)))
+
+@needs_permission(bot, hidden=True)
+async def lock(ctx, *args):
+    """
+    Lock the channel from certain member role
+    """
+    # await bot.send_message(destination=ctx.message.author, content=ctx.message.server.roles[0].name)
+    role = ctx.message.server.roles[0]
+    permissions = list(role.permissions)
+    permissions = {pair[0]:pair[1] for pair in permissions}
+    permissions['send_messages'] = False
+    
+    # fk this shit
+    raise NotImplemented
+
+    permissions = PermissionOverwrite()
+    permissions.update(kwargs=permissions)
+    print(permissions.from_pair['send_messages'])
+    await bot.edit_channel_permissions(ctx.message.channel, role, overwrite=permissions)
+    
+
 
 class BadResponseError(Exception):
     """
@@ -294,8 +319,8 @@ class BadResponseError(Exception):
         """
         Constructor for the BadResponseError class
         """
-
         self.value = value
+
     def __str__(self):
         """
         Function to return string representation of the exception
