@@ -1,4 +1,6 @@
 import asyncio
+import os
+import random
 import string
 import time
 import typing
@@ -78,7 +80,7 @@ async def mooni(ctx, *args):
     """
     Command to send mp3 file containing mooni sample
     """
-    await bot.send_file(fp=f'files/{"_".join(args)}.mp3', destination=ctx.message.channel)
+    await bot.send_file(fp=f'files/mooni/{"_".join(args)}.mp3', destination=ctx.message.channel)
 
 
 """
@@ -136,7 +138,7 @@ async def fizzbuzz(ctx, *args):
         await bot.say('Choose difficulty: ' + difficulties_string)
         response = await wait_for_response(ctx, valid_difficulty_response, threshold)
         await bot.say('Lets Go!')
-
+ 
         difficulty = difficulties[response.lower()]
         current = 1
         while True:
@@ -309,7 +311,15 @@ async def lock(ctx, *args):
     print(permissions.from_pair['send_messages'])
     await bot.edit_channel_permissions(ctx.message.channel, role, overwrite=permissions)
     
-
+@bot.command(pass_context=True)
+async def dab(ctx, *args):
+    with open('files/dab/links.txt') as file:
+        url = random.choice(list(file))
+    
+    embed = discord.Embed()
+    embed.set_image(url=url)
+    await bot.send_message(embed=embed, destination=ctx.message.channel)
+        
 
 class BadResponseError(Exception):
     """
