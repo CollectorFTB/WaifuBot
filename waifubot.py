@@ -278,11 +278,8 @@ async def id(ctx, *args):
     """
     if len(args) == 0:
         await bot.say('No such user(s).')
-    for username in args:
-        for user in ctx.message.server.members:
-            if user.name == username:
-                await bot.send_message(content=f'{user.name} : {user.id}', destination=ctx.message.author)
-
+    for user in (user for user in ctx.message.server.members if user.name in args):
+        await bot.send_message(content=f'{user.name} : {user.id}', destination=ctx.message.author)
 
 @private_command(bot)
 async def change_presence(ctx, *args, **kwargs):
@@ -299,16 +296,10 @@ async def lock(ctx, *args):
     """
     # await bot.send_message(destination=ctx.message.author, content=ctx.message.server.roles[0].name)
     role = ctx.message.server.roles[0]
-    permissions = list(role.permissions)
-    permissions = {pair[0]:pair[1] for pair in permissions}
-    permissions['send_messages'] = False
-    
-    # fk this shit
-    raise NotImplemented
-
+    new_permissions = {key:val for key,val in list(role.permissions)}
+    new_permissions['send_messages'] = False
     permissions = PermissionOverwrite()
-    permissions.update(kwargs=permissions)
-    print(permissions.from_pair['send_messages'])
+    permissions.update(**new_permissions)
     await bot.edit_channel_permissions(ctx.message.channel, role, overwrite=permissions)
     
 @bot.command(pass_context=True)
